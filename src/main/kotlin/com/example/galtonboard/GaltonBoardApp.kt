@@ -21,8 +21,8 @@ const val SCREEN_X = 600.0
 const val SCREEN_Y = 600.0
 const val NUM_ROWS = 10
 const val NUM_BUCKETS = NUM_ROWS + PEGS_IN_FIRST_ROW + 1 // Probably... don't change this
-const val NUM_BALLS = 100
-const val GRAVITY = 0.005
+const val BALLS_PER_SECOND = 10
+const val GRAVITY = 500.0
 const val WIGGLE_DEG = 5.0
 const val ELASTICITY = 0.5
 
@@ -41,7 +41,7 @@ class GaltonBoardApp : Application() {
         drawGaltonBoard(boardGC)
         val ballCanvas = Canvas(SCREEN_X, SCREEN_Y)
         val ballGC: GraphicsContext = ballCanvas.graphicsContext2D
-        addBalls(balls)
+        addBall(balls)
         boardGC.stroke = Color.RED
         boardGC.strokeLine(firstBucketRightX, 0.0, firstBucketRightX, SCREEN_Y)
         boardGC.strokeLine(lastBucketLeftX, 0.0, lastBucketLeftX, SCREEN_Y)
@@ -54,10 +54,17 @@ class GaltonBoardApp : Application() {
 
         val timer = object : AnimationTimer() {
             var prevTime = System.nanoTime() / 1_000_000_000.0
+            var ballTimer = 0.0
 
             override fun handle(now: Long) {
                 val curTime = now / 1_000_000_000.0
                 val deltaTime = curTime - prevTime
+                prevTime = curTime
+                ballTimer += deltaTime
+                while (ballTimer >= 1.0 / BALLS_PER_SECOND) {
+                    addBall(balls)
+                    ballTimer -= 1.0 / BALLS_PER_SECOND
+                }
                 updateBalls(balls, deltaTime)
                 clearBalls(ballGC)
                 drawBalls(balls, ballGC)
@@ -128,10 +135,8 @@ class GaltonBoardApp : Application() {
         gc.clearRect(0.0, 0.0, SCREEN_X, SCREEN_Y)
     }
 
-    fun addBalls(balls: MutableList<Ball>) {
-        for (ball in 0..<NUM_BALLS) {
-            balls.add(Ball((SCREEN_X / 2) + Random.nextDouble(-1.0, 1.0), 0.0))
-        }
+    fun addBall(balls: MutableList<Ball>) {
+        balls.add(Ball((SCREEN_X / 2) + Random.nextDouble(-1.0, 1.0), 0.0))
     }
 
     fun makeGrid(spacing: Double): Canvas {
